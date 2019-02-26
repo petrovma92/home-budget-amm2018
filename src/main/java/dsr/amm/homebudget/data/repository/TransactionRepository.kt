@@ -18,6 +18,9 @@ interface TransactionRepository<T : Transaction> : PagingAndSortingRepository<T,
     @Query("from #{#entityName} tx where src = ?1 order by tx.createDate")
     fun findAllByAccount(pageable: Pageable, account: Account): Page<T>
 
+    @Query("from #{#entityName} tx where src = ?1 order by tx.createDate DESC LIMIT 1")
+    fun findLastByAccount(account: Account): Transaction?
+
     @Query("from #{#entityName} tx where src = ?1 and tx.createDate between ?2 and ?3 order by tx.createDate")
     fun findAllByAccountWithTimeFilter(pageable: Pageable, account: Account, from: OffsetDateTime, to: OffsetDateTime): Page<T>
 

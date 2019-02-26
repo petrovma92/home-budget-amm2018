@@ -74,22 +74,29 @@ open class AccountService @Autowired constructor(
     fun withdraw(accountId: Long, tx: WithdrawalTxDTO): TransactionDTO {
         val acc = getAccount(accountId)
 
-        val transaction = mapper.map<WithdrawalTxDTO, WithdrawalTx>(tx, WithdrawalTx::class.java)
-        transaction.createDate = OffsetDateTime.now()
-        transaction.src = acc
+        val lastTx = transactionRepository.findLastByAccount(acc)
 
-        val value = acc.currentValue
+        if(lastTx?.createDate?.isAfter(tx.createDate) == true) {
 
-        val amount = convertToCurrency(transaction.amount, transaction.currency, acc.currency)
+        }
+        else {
+            val transaction = mapper.map<WithdrawalTxDTO, WithdrawalTx>(tx, WithdrawalTx::class.java)
+            transaction.createDate = OffsetDateTime.now()
+            transaction.src = acc
 
-        val newValue = value.subtract(amount)
-        acc.currentValue = newValue
-        transaction.newValue = newValue
+            val value = acc.currentValue
 
-        val txResult = withdrawalTxRepository.save(transaction)
-        repository.save(acc)
+            val amount = convertToCurrency(transaction.amount, transaction.currency, acc.currency)
 
-        return mapper.map(txResult, TransactionDTO::class.java)
+            val newValue = value.subtract(amount)
+            acc.currentValue = newValue
+            transaction.newValue = newValue
+
+            val txResult = withdrawalTxRepository.save(transaction)
+            repository.save(acc)
+
+            return mapper.map(txResult, TransactionDTO::class.java)
+        }
     }
 
     private fun getAccount(accountId: Long, needLock: Boolean = true): Account {
